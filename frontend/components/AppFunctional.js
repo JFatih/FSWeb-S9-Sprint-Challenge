@@ -1,13 +1,6 @@
 import axios from "axios";
 import React, { useState } from "react";
 
-const initialValues = {
-  initialMessage: "",
-  initialEmail: "",
-  initialSteps: 0,
-  initialIndex: 4,
-};
-
 const datas = [
   { x: 1, y: 1 },
   { x: 2, y: 1 },
@@ -27,10 +20,12 @@ const errorMessage = {
   left: "Sola gidemezsiniz",
 };
 export default function AppFunctional(props) {
-  const [data, setData] = useState(initialValues);
+  const [message, setMessage] = useState("");
+  const [email, setEmail] = useState("");
+  const [steps, setSteps] = useState(0);
+  const [index, setIndex] = useState(4);
 
   function getXY() {
-    let index = data.initialIndex;
     return datas[index];
   }
 
@@ -42,96 +37,96 @@ export default function AppFunctional(props) {
   }
 
   function reset() {
-    setData(initialValues);
+    setMessage("");
+    setEmail("");
+    setSteps(0);
+    setIndex(4);
   }
 
   function sonrakiIndex(id) {
-    const indexA = data.initialIndex;
-    if (id === "up" && indexA - 3 >= 0) {
-      let index = indexA - 3;
-      return index;
-    } else if (id === "down" && indexA + 3 <= 8) {
-      let index = indexA + 3;
-      return index;
+    if (id === "up" && index - 3 >= 0) {
+      let indexA = index - 3;
+      return indexA;
+    } else if (id === "down" && index + 3 <= 8) {
+      let indexA = index + 3;
+      return indexA;
     } else if (
-      (id === "right" && indexA >= 0 && indexA <= 2 && indexA + 1 <= 2) ||
-      (id === "right" && indexA >= 3 && indexA <= 5 && indexA + 1 <= 5) ||
-      (id === "right" && indexA >= 6 && indexA <= 8 && indexA + 1 <= 8)
+      (id === "right" && index >= 0 && index <= 2 && index + 1 <= 2) ||
+      (id === "right" && index >= 3 && index <= 5 && index + 1 <= 5) ||
+      (id === "right" && index >= 6 && index <= 8 && index + 1 <= 8)
     ) {
-      let index = indexA + 1;
-      return index;
+      let indexA = index + 1;
+      return indexA;
     } else if (
-      (id === "left" && indexA >= 0 && indexA <= 2 && indexA - 1 >= 0) ||
-      (id === "left" && indexA >= 3 && indexA <= 5 && indexA - 1 >= 3) ||
-      (id === "left" && indexA >= 6 && indexA <= 8 && indexA - 1 >= 6)
+      (id === "left" && index >= 0 && index <= 2 && index - 1 >= 0) ||
+      (id === "left" && index >= 3 && index <= 5 && index - 1 >= 3) ||
+      (id === "left" && index >= 6 && index <= 8 && index - 1 >= 6)
     ) {
-      let index = indexA - 1;
-      return index;
+      let indexA = index - 1;
+      return indexA;
     }
   }
 
   function ilerle(evt) {
     const { id } = evt.target;
     if (sonrakiIndex(id) + 1) {
-      let index = sonrakiIndex(id);
-      const newData = { ...data };
-      newData.initialMessage = ``;
-      newData.initialIndex = index;
-      newData.initialSteps += 1;
-      setData(newData);
+      let indexA = sonrakiIndex(id);
+      setMessage("");
+      setIndex(indexA);
+      setSteps((prev) => prev + 1);
     } else {
-      const newData = { ...data };
-      newData.initialMessage = errorMessage[id];
-      setData(newData);
+      setMessage(errorMessage[id]);
     }
   }
 
   function onChange(evt) {
     const { value } = evt.target;
-    const newData = { ...data };
-    newData.initialEmail = value;
-    setData(newData);
+    setEmail(value);
   }
 
   function onSubmit(evt) {
     evt.preventDefault();
-    const { x, y } = getXY();
-    const payload = {
-      x: x,
-      y: y,
-      steps: data.initialSteps,
-      email: data.initialEmail,
-    };
-    console.log(payload);
-
-    axios
-      .post("http://localhost:9000/api/result", payload)
-      .then((response) => {
-        setData({ ...data, ["initialMessage"]: response.data.message });
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    let pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email.match(pattern)) {
+      const { x, y } = getXY();
+      const payload = {
+        x: x,
+        y: y,
+        steps: steps,
+        email: email,
+      };
+      axios
+        .post("http://localhost:9000/api/result", payload)
+        .then((response) => {
+          setMessage(response.data.message);
+          console.log(response.data.message);
+          setEmail("");
+        })
+        .catch((error) => {
+          setMessage(error.response.data.message);
+        });
+    } else if (email === "") {
+      setMessage("Ouch: email is required");
+    } else if (!email.match(pattern)) {
+      setMessage("Ouch: email must be a valid email");
+    }
   }
 
   return (
     <div id="wrapper" className={props.className}>
       <div className="info">
         <h3 id="coordinates">{getXYMesaj()}</h3>
-        <h3 id="steps">{data.initialSteps} kere ilerlediniz</h3>
+        <h3 id="steps">{steps} kere ilerlediniz</h3>
       </div>
       <div id="grid">
         {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
-          <div
-            key={idx}
-            className={`square${idx === data.initialIndex ? " active" : ""}`}
-          >
-            {idx === data.initialIndex ? "B" : null}
+          <div key={idx} className={`square${idx === index ? " active" : ""}`}>
+            {idx === index ? "B" : null}
           </div>
         ))}
       </div>
       <div className="info">
-        <h3 id="message">{data.initialMessage}</h3>
+        <h3 id="message">{message}</h3>
       </div>
       <div id="keypad">
         <button onClick={ilerle} id="left">
@@ -152,7 +147,7 @@ export default function AppFunctional(props) {
       </div>
       <form onSubmit={onSubmit}>
         <input
-          value={data.initialEmail}
+          value={email}
           id="email"
           type="email"
           placeholder="email girin"
